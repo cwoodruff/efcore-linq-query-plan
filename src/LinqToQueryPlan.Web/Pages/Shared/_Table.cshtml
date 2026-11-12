@@ -1,0 +1,21 @@
+@model TableSpec
+<div>
+    <div class="panel-title">@Model.Title</div>
+    <div class="table-wrap">
+        <table class="grid">
+            <thead>
+                <tr>@foreach (var c in Model.Columns) { <th>@c</th> }</tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>@foreach (var v in r) { <td>@v</td> }</tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Caption is not null)
+    {
+        <p class="muted" style="font-size:0.8rem;margin-top:0.3rem">@Model.Caption</p>
+    }
+</div>

@@ -1,0 +1,36 @@
+@model EnvironmentStatus
+@if (!Model.Connected)
+{
+    <div class="card">
+        <div class="error" style="border-left:4px solid var(--bad);padding:0.6rem 0.8rem">
+            <strong>Can't connect to @Model.Server.</strong><br />
+            <span class="muted">@Model.ConnectionError</span>
+        </div>
+        <p style="margin-top:0.8rem">Set the connection string in <code>appsettings.Development.json</code> (<code>Lab:ConnectionString</code>) or the <code>LAHMAN_CONNECTION</code> environment variable, then reload. See <a href="/getting-started">Getting started</a>.</p>
+    </div>
+    return;
+}
+<div class="card">
+    <p class="muted" style="margin-bottom:0.75rem">
+        @Model.Server, database <code>@Model.Database</code>. SQL Server @Model.Version, @Model.Edition.
+    </p>
+    <ul class="checks">
+        @foreach (var c in Model.Checks())
+        {
+            var cls = c.Ok ? "ok" : c.Optional ? "opt" : "no";
+            <li class="@cls">
+                <span class="mark">@(c.Ok ? "✓" : c.Optional ? "-" : "!")</span>
+                <span>@c.Name</span>
+                <span class="badge @(c.Ok ? "good" : c.Optional ? "" : "warn")">@c.Value</span>
+                @if (!c.Ok)
+                {
+                    <span class="fix">@c.Fix</span>
+                }
+            </li>
+        }
+    </ul>
+    @if (Model.Checks().Any(c => !c.Ok && !c.Optional))
+    {
+        <p style="margin:0.9rem 0 0"><a class="btn small" href="/lab">Fix on the Lab page</a></p>
+    }
+</div>

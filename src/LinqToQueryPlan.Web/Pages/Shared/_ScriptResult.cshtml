@@ -1,0 +1,29 @@
+@model ScriptResult
+<article class="card result">
+    <header>
+        <h3>@Model.Name</h3>
+        <span class="badge good">@Model.Batches batches</span>
+        <span class="badge">@Model.ElapsedMs ms</span>
+        <button type="button" class="tool close" data-close>Close</button>
+    </header>
+    <div class="body">
+        @if (Model.Messages.Count > 0)
+        {
+            <pre><code class="language-plaintext">@string.Join("\n", Model.Messages)</code></pre>
+        }
+        @foreach (var rs in Model.ResultSets.Where(r => r.Count > 1).TakeLast(4))
+        {
+            <div class="table-wrap">
+                <table class="grid">
+                    <thead><tr>@foreach (var h in rs[0]) { <th>@h</th> }</tr></thead>
+                    <tbody>
+                        @foreach (var row in rs.Skip(1).Take(20))
+                        {
+                            <tr>@foreach (var v in row) { <td>@v</td> }</tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</article>

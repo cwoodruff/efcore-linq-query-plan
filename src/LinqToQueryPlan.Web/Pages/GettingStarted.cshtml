@@ -1,0 +1,8 @@
+@page "/getting-started"
+@inject NotesService Notes
+@{
+    ViewData["Title"] = "Getting started";
+}
+<article class="card notes" style="max-width: 52rem">
+    @Html.Raw(Notes.Render("getting-started.md"))
+</article>

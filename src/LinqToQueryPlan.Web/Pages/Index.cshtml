@@ -1,0 +1,50 @@
+@page
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero">
+    <div class="eyebrow">Demo lab</div>
+    <h1>From LINQ to Query Plan: Teaching Your Queries to Respect the Optimizer</h1>
+    <p class="lede">
+        Nine demos that follow an ordinary EF Core 10 query from C# into the SQL Server 2025 optimizer and back.
+        Every query runs for real against the Lahman baseball database, and every plan you see is pulled from the
+        server's plan cache: the plan EF actually got, not one you pasted into a query window.
+    </p>
+    <p><a class="btn" href="/getting-started">Getting started</a> <a class="btn secondary" href="/demos/sniffing">Start with the case</a></p>
+</section>
+
+<div class="beats">
+    <div class="card beat">
+        <div class="n">1</div>
+        <h3>What EF emitted</h3>
+        <p class="muted">The SQL text and parameters, exactly as they left your app.</p>
+    </div>
+    <div class="card beat">
+        <div class="n">2</div>
+        <h3>What the optimizer saw</h3>
+        <p class="muted">The cached plan, its compiled parameter values, estimates against actuals.</p>
+    </div>
+    <div class="card beat">
+        <div class="n">3</div>
+        <h3>Who owns the fix</h3>
+        <p class="muted">Change the LINQ, add a hint, or hand your DBA a query_id.</p>
+    </div>
+</div>
+
+<h2>Demos</h2>
+<div class="demo-cards">
+    @foreach (var d in DemoCatalog.All)
+    {
+        <a class="card demo-card" href="/demos/@d.Slug">
+            <div class="eyebrow">@d.TalkSection</div>
+            <h3><span class="num">@d.Number.</span> @d.Title</h3>
+            <p>@d.Proves</p>
+        </a>
+    }
+</div>
+
+<h2 style="margin-top:2rem">Server check</h2>
+<div hx-get="/lab?handler=Environment" hx-trigger="load">
+    <p class="muted">Checking the database...</p>
+</div>

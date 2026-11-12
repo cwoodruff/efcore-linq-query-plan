@@ -1,0 +1,103 @@
+@page "/demos/{slug}"
+@model LinqToQueryPlan.Web.Pages.Demos.DemoModel
+@{
+    var d = Model.Demo;
+    ViewData["Title"] = $"{d.Number}. {d.Title}";
+}
+
+<div class="demo-head">
+    <div class="eyebrow">Demo @d.Number &middot; @d.TalkSection</div>
+    <h1>@d.Title</h1>
+    <p class="proves">@d.Proves</p>
+</div>
+
+<div class="demo-grid">
+    <section class="run-col">
+        <div class="actions">
+            @foreach (var a in d.Actions)
+            {
+                var blocked = a.RequiresAdmin && !Model.AdminAllowed;
+                <div class="card action">
+                    <form hx-post="?handler=Run" hx-target="#results" hx-swap="afterbegin"
+                          hx-indicator="find .spinner" hx-disabled-elt="find button">
+                        <input type="hidden" name="action" value="@a.Key" />
+                        <div>
+                            <h3>@a.Label</h3>
+                            <p>@a.Description</p>
+                        </div>
+                        @if (a.Inputs.Count > 0)
+                        {
+                            <div class="row">
+                                @foreach (var i in a.Inputs)
+                                {
+                                    <label class="field" title="@i.Help">
+                                        @i.Label
+                                        @if (i.Options is { Count: > 0 })
+                                        {
+                                            <select name="@i.Name">
+                                                @foreach (var o in i.Options)
+                                                {
+                                                    <option value="@o" selected="@(o == i.Default)">@o</option>
+                                                }
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <input name="@i.Name" value="@i.Default" placeholder="@i.Help" />
+                                        }
+                                    </label>
+                                }
+                            </div>
+                        }
+                        <div class="go">
+                            <button class="btn" @(blocked ? "disabled" : "")>Run</button>
+                            <span class="spinner"></span>
+                            @if (a.RequiresAdmin)
+                            {
+                                <span class="admin-note">@(blocked ? "Turned off: " + Model.AdminReason : "Changes server state. Local container only.")</span>
+                            }
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <div class="results-head">
+            <h2>Results</h2>
+            <button type="button" class="tool" onclick="document.getElementById('results').innerHTML=''">Clear</button>
+        </div>
+        <div id="results"></div>
+
+        @if (d.Panels != ServerPanels.None)
+        {
+            <section class="server">
+                <h2>Server view</h2>
+                <p class="muted">The same queries, from the DBA's side of the wall.</p>
+                <div class="tabs">
+                    @if (d.Panels.HasFlag(ServerPanels.PlanCache))
+                    {
+                        <button class="btn secondary small" hx-get="?handler=PlanCache" hx-target="#server-panel" hx-indicator="this">Plan cache</button>
+                    }
+                    @if (d.Panels.HasFlag(ServerPanels.QueryStore))
+                    {
+                        <button class="btn secondary small" hx-get="?handler=QueryStore" hx-target="#server-panel" hx-indicator="this">Query Store</button>
+                    }
+                    @if (d.Panels.HasFlag(ServerPanels.ExtendedEvents))
+                    {
+                        <button class="btn secondary small" hx-get="?handler=Xe" hx-target="#server-panel" hx-indicator="this">Extended Events</button>
+                    }
+                </div>
+                <div id="server-panel" class="server-panel"></div>
+            </section>
+        }
+
+        <p style="margin-top:2rem; display:flex; justify-content:space-between; gap:1rem">
+            @if (Model.Previous is { } p) { <a href="/demos/@p.Slug">&larr; @p.Number. @p.Title</a> } else { <span></span> }
+            @if (Model.Next is { } n) { <a href="/demos/@n.Slug">@n.Number. @n.Title &rarr;</a> }
+        </p>
+    </section>
+
+    <aside class="notes-col card notes">
+        @Html.Raw(Model.NotesHtml)
+    </aside>
+</div>

@@ -1,0 +1,22 @@
+@using LinqToQueryPlan.Lab.Diagnostics
+@model DoctorReport
+<div class="table-wrap">
+    <table class="grid">
+        <thead><tr><th></th><th>Step</th><th>ms</th><th>Result</th></tr></thead>
+        <tbody>
+            @foreach (var s in Model.Steps)
+            {
+                <tr>
+                    <td><span class="badge @(s.Ok ? "good" : "bad")">@(s.Ok ? "ok" : "fail")</span></td>
+                    <td>@s.Name</td>
+                    <td>@s.Ms</td>
+                    <td>@s.Detail</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@foreach (var a in Model.Advice)
+{
+    <p class="@(Model.AllOk ? "muted" : "admin-note")" style="margin-top:0.6rem">@a</p>
+}

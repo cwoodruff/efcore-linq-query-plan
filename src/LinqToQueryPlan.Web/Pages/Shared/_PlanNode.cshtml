@@ -1,0 +1,62 @@
+@model PlanNode
+@{
+    var max = ViewData["maxRows"] is double m ? m : 1;
+    var miss = Model.MisestimateFactor is >= 10 && Math.Max(Model.EstRowsTotal, Model.ActualRows ?? 0) >= 100;
+}
+<li>
+    <div class="op @(miss ? "miss" : "")">
+        <div>
+            <span class="name">@Model.PhysicalOp</span>
+            @if (Model.LogicalOp != Model.PhysicalOp && Model.LogicalOp.Length > 0)
+            {
+                <span class="muted" style="font-size:0.78rem"> (@Model.LogicalOp)</span>
+            }
+            @if (Model.ObjectName is not null)
+            {
+                <span class="obj">@Model.ObjectName</span>
+            }
+            @if (Model.Predicate is not null)
+            {
+                <span class="pred" title="@Model.Predicate">@Model.Predicate</span>
+            }
+        </div>
+        <div class="meter">
+            <span>cost @Ui.Pct(Model.CostPercent)</span>
+            <div class="bar cost"><i style="width:@Ui.Width(Model.CostPercent)%"></i></div>
+        </div>
+        <div class="meter">
+            <span>
+                est @Ui.Rows(Model.EstRowsTotal)
+                @if (Model.ActualRows is { } a)
+                {
+                    <text> &middot; actual @Ui.Rows(a)</text>
+                    @if (miss)
+                    {
+                        <span class="x"> &times;@Model.MisestimateFactor!.Value.ToString("N0")</span>
+                    }
+                }
+            </span>
+            <div class="bar est"><i style="width:@Ui.LogWidth(Model.EstRowsTotal, max)%"></i></div>
+            @if (Model.ActualRows is { } act)
+            {
+                <div class="bar act"><i style="width:@Ui.LogWidth(act, max)%"></i></div>
+            }
+        </div>
+    </div>
+    @if (Model.Warnings.Count > 0)
+    {
+        @foreach (var w in Model.Warnings)
+        {
+            <div class="admin-note" style="margin:0.15rem 0 0 0.5rem">@w</div>
+        }
+    }
+    @if (Model.Children.Count > 0)
+    {
+        <ul>
+            @foreach (var c in Model.Children)
+            {
+                <partial name="_PlanNode" model="c" view-data="ViewData" />
+            }
+        </ul>
+    }
+</li>

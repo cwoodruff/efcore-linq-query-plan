@@ -1,0 +1,134 @@
+@model RunResult
+@{
+    var id = "r" + Guid.NewGuid().ToString("n")[..8];
+    var groups = Model.Panels.GroupBy(p => p.Group ?? p.Title).ToList();
+}
+<article class="card result" id="@id">
+    <header>
+        <h3>@Model.ActionLabel</h3>
+        @if (Model.Error is null)
+        {
+            <span class="badge good">@Model.Queries.Count quer@(Model.Queries.Count == 1 ? "y" : "ies")</span>
+        }
+        else
+        {
+            <span class="badge bad">error</span>
+        }
+        <span class="badge">@Model.TotalMs ms total</span>
+        <span class="badge">@Model.StartedUtc.ToLocalTime().ToString("HH:mm:ss")</span>
+        <button type="button" class="tool close" data-close>Close</button>
+    </header>
+    <div class="body">
+        @if (Model.Error is not null)
+        {
+            <div class="error">
+                <strong>@Model.Error</strong>
+                @if (Model.ErrorHint is not null)
+                {
+                    <div class="muted" style="margin-top:0.3rem">@Model.ErrorHint</div>
+                }
+            </div>
+        }
+
+        @if (Model.Observations.Count > 0)
+        {
+            <ul class="observations">
+                @foreach (var o in Model.Observations)
+                {
+                    <li class="@Ui.KindClass(o.Kind)">@o.Text</li>
+                }
+            </ul>
+        }
+
+        @if (Model.Charts.Count > 0)
+        {
+            <div class="charts">
+                @foreach (var c in Model.Charts)
+                {
+                    <div class="chart"><canvas id="@c.Id" role="img" aria-label="@c.Title"></canvas></div>
+                    <script>lab.chart('@c.Id', @Html.Raw(Ui.ChartJson(c)));</script>
+                }
+            </div>
+        }
+
+        @foreach (var g in groups)
+        {
+            <div class="side-by-side">
+                @foreach (var p in g)
+                {
+                    var pid = "p" + Guid.NewGuid().ToString("n")[..8];
+                    <div>
+                        <div class="panel-title">
+                            @p.Title
+                            @if (p.Badge is not null)
+                            {
+                                <span class="badge @(p.Badge == "redacted" ? "warn" : p.Badge == "server" ? "accent" : "good")">@p.Badge</span>
+                            }
+                        </div>
+                        <div class="code-wrap">
+                            <button type="button" class="tool copy" data-copy="@pid">Copy</button>
+                            <pre><code id="@pid" class="language-@(p.Language == "text" ? "plaintext" : p.Language)">@p.Text</code></pre>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @foreach (var t in Model.Tables)
+        {
+            <partial name="_Table" model="t" />
+        }
+
+        @for (var i = 0; i < Model.Queries.Count; i++)
+        {
+            var q = Model.Queries[i];
+            var sqlId = "s" + Guid.NewGuid().ToString("n")[..8];
+            <details class="query" @(i == Model.Queries.Count - 1 ? "open" : "")>
+                <summary>
+                    <span class="q-label">@q.Label</span>
+                    <span class="badge">@q.Rows.ToString("N0") rows</span>
+                    <span class="badge">@q.ElapsedMs ms</span>
+                    @foreach (var p in q.Plans)
+                    {
+                        <span class="badge @(p.CompiledForThisRun ? "good" : "warn")">@(p.CompiledForThisRun ? "new plan" : "reused plan")</span>
+                        @if (p.Parsed.PlanPerValueHint is not null)
+                        {
+                            <span class="badge accent">PSP variant</span>
+                        }
+                    }
+                </summary>
+                <div class="q-body">
+                    @if (q.Sql is not null)
+                    {
+                        <div>
+                            <div class="panel-title">What EF emitted <span class="muted" style="font-weight:400">(ToQueryString)</span></div>
+                            <div class="code-wrap">
+                                <button type="button" class="tool copy" data-copy="@sqlId">Copy</button>
+                                <pre><code id="@sqlId" class="language-sql">@q.Sql</code></pre>
+                            </div>
+                        </div>
+                    }
+                    @foreach (var p in q.Plans)
+                    {
+                        <partial name="_PlanView" model="p" />
+                    }
+                </div>
+            </details>
+        }
+
+        @if (Model.EfLog.Count > 0)
+        {
+            <details class="log">
+                <summary>EF log (@Model.EfLog.Count entries)</summary>
+                <pre><code class="language-plaintext">@string.Join("\n\n", Model.EfLog)</code></pre>
+            </details>
+        }
+
+        @if (Model.DeferredXeTag is not null)
+        {
+            <div hx-get="?handler=Xe&tag=@Uri.EscapeDataString(Model.DeferredXeTag)" hx-trigger="load delay:6s" hx-swap="innerHTML">
+                <p class="muted"><span class="spinner" style="display:inline-block"></span> Loading the Extended Events trace in a few seconds (the session flushes every 5 seconds)...</p>
+            </div>
+        }
+    </div>
+</article>

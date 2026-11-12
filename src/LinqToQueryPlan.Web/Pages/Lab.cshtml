@@ -1,0 +1,58 @@
+@page "/lab"
+@model LabModel
+@{
+    ViewData["Title"] = "Lab setup";
+}
+
+<div class="demo-head">
+    <div class="eyebrow">Lab setup</div>
+    <h1>Make the server match the talk</h1>
+    <p class="lede">
+        The demos depend on a few server settings: compatibility level 170, Query Store capturing everything,
+        last actual plans, and an Extended Events session. Each check below says how to fix it. The buttons run
+        the numbered scripts in the repo's <code>scripts</code> folder, so what the app does is exactly what you'd run by hand.
+    </p>
+</div>
+
+<div hx-get="/lab?handler=Environment" hx-trigger="load, lab-changed from:body">
+    <p class="muted">Checking the database (gives up after 20 seconds)...</p>
+</div>
+
+<div class="card action" style="margin-top:1rem">
+    <form hx-post="/lab?handler=Doctor" hx-target="#doctor-result" hx-indicator="find .spinner" hx-disabled-elt="find button">
+        <h3>Connection check</h3>
+        <p>If anything spins forever, start here. It walks the connection one step at a time (name lookup, TCP port, TLS and login, database, permissions), each with its own short time limit, and tries <code>Encrypt=False</code> and <code>127.0.0.1</code> as alternatives so you can see which one works. The password is never shown, only its length.</p>
+        <div class="go"><button class="btn">Run connection check</button><span class="spinner"></span></div>
+    </form>
+    <div id="doctor-result" style="margin-top:0.8rem"></div>
+</div>
+
+<h2 style="margin-top:2rem">Actions</h2>
+@if (!Model.AdminAllowed)
+{
+    <p class="admin-note">@Model.AdminReason</p>
+}
+<div class="admin-grid">
+    <div class="card action">
+        <form hx-post="/lab?handler=Setup" hx-target="#admin-result" hx-indicator="find .spinner" hx-disabled-elt="find button">
+            <h3>Setup</h3>
+            <p>Runs <code>01-setup-database.sql</code> and <code>03-xe-session.sql</code>. Safe to run again.</p>
+            <div class="go"><button class="btn" @(Model.AdminAllowed ? "" : "disabled")>Run setup</button><span class="spinner"></span></div>
+        </form>
+    </div>
+    <div class="card action">
+        <form hx-post="/lab?handler=Reset" hx-target="#admin-result" hx-indicator="find .spinner" hx-disabled-elt="find button">
+            <h3>Reset between demos</h3>
+            <p>Runs <code>05-reset-between-demos.sql</code>: clears the plan cache and Query Store, restarts the XE session. Laptop only.</p>
+            <div class="go"><button class="btn" @(Model.AdminAllowed ? "" : "disabled")>Reset</button><span class="spinner"></span></div>
+        </form>
+    </div>
+    <div class="card action">
+        <form hx-post="/lab?handler=Inflate" hx-target="#admin-result" hx-indicator="find .spinner" hx-disabled-elt="find button">
+            <h3>Build the Hits table (optional)</h3>
+            <p>Runs <code>06-inflate-for-psp.sql</code>: one row per hit, several million rows. Gives demo 1 enough skew for PSP to kick in. Takes a minute.</p>
+            <div class="go"><button class="btn" @(Model.AdminAllowed ? "" : "disabled")>Build Hits</button><span class="spinner"></span></div>
+        </form>
+    </div>
+</div>
+<div id="admin-result" style="margin-top:1rem"></div>

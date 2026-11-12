@@ -1,0 +1,8 @@
+@model EnvironmentStatus
+@{
+    var required = Model.Checks().Where(c => !c.Optional).ToList();
+    var failing = required.Count(c => !c.Ok);
+    var cls = !Model.Connected ? "bad" : failing == 0 ? "ok" : "warn";
+    var text = !Model.Connected ? "Server not reachable" : failing == 0 ? $"{Model.Database} ready" : $"{failing} setup item{(failing == 1 ? "" : "s")} to fix";
+}
+<a class="env-pill @cls" href="/lab" title="@Model.Server / @Model.Database"><span class="dot"></span>@text</a>

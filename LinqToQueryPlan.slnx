@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LinqToQueryPlan.Data/LinqToQueryPlan.Data.csproj" />
+    <Project Path="src/LinqToQueryPlan.Demos/LinqToQueryPlan.Demos.csproj" />
+    <Project Path="src/LinqToQueryPlan.Lab/LinqToQueryPlan.Lab.csproj" />
+    <Project Path="src/LinqToQueryPlan.Web/LinqToQueryPlan.Web.csproj" />
+  </Folder>
+</Solution>

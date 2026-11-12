@@ -1,0 +1,71 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var path = Context.Request.Path.Value ?? "/";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] is string t ? t + " | " : "")From LINQ to Query Plan</title>
+    <script>
+        // Theme and text size before first paint, so the projector never flashes the wrong theme.
+        (function () {
+            try {
+                var t = localStorage.getItem('lab-theme'); if (t) document.documentElement.dataset.theme = t;
+                var s = localStorage.getItem('lab-size'); if (s) document.documentElement.dataset.size = s;
+                var n = localStorage.getItem('lab-notes'); if (n) document.documentElement.dataset.notes = n;
+            } catch (e) { }
+        })();
+    </script>
+    <link rel="stylesheet" href="~/lib/highlightjs/github.min.css" id="hl-light" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/highlightjs/github-dark.min.css" id="hl-dark" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body hx-headers='{"RequestVerificationToken": "@token"}'>
+    <header class="topbar">
+        <a class="brand" href="/">
+            <span class="brand-mark" aria-hidden="true">&#x2192;</span>
+            <span>From LINQ to Query Plan</span>
+        </a>
+        <nav class="topnav">
+            <a href="/getting-started" class="@(path.StartsWith("/getting-started") ? "active" : "")">Getting started</a>
+            <a href="/lab" class="@(path.StartsWith("/lab") ? "active" : "")">Lab setup</a>
+        </nav>
+        <div class="toolbar">
+            <button type="button" class="tool" data-toggle="notes" title="Show or hide the notes column">Notes</button>
+            <button type="button" class="tool" data-toggle="size" title="Larger text for projectors">A+</button>
+            <button type="button" class="tool" data-toggle="theme" title="Switch light and dark">Theme</button>
+        </div>
+    </header>
+
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="env-pill" hx-get="/lab?handler=Pill" hx-trigger="load" hx-swap="outerHTML">
+                <span class="dot"></span> checking server...
+            </div>
+            <ol class="demo-nav">
+                @foreach (var d in DemoCatalog.All)
+                {
+                    var active = path.Equals("/demos/" + d.Slug, StringComparison.OrdinalIgnoreCase);
+                    <li>
+                        <a href="/demos/@d.Slug" class="@(active ? "active" : "")">
+                            <span class="num">@d.Number</span>
+                            <span class="label">@d.Title</span>
+                        </a>
+                    </li>
+                }
+            </ol>
+        </aside>
+        <main class="content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/htmx/htmx.min.js" asp-append-version="true"></script>
+    <script src="~/lib/chartjs/chart.umd.js" asp-append-version="true"></script>
+    <script src="~/lib/highlightjs/highlight.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+@model XeView
+@{
+    var tag = Model.Tag;
+}
+<div class="card stack">
+    <div class="panel-title">Extended Events <span class="muted" style="font-weight:400">session LinqToQueryPlan, filtered to <code>@tag</code> (scripts/03 and 07)</span></div>
+    @if (!Model.SessionExists)
+    {
+        <p class="admin-note">The XE session doesn't exist yet. Run Setup on the <a href="/lab">Lab page</a>.</p>
+    }
+    else if (!Model.SessionRunning)
+    {
+        <p class="admin-note">The XE session exists but is stopped (it doesn't start with the container). Run Setup or Reset on the <a href="/lab">Lab page</a>.</p>
+    }
+    else
+    {
+        <div class="panel-title">Statements the server received <span class="muted" style="font-weight:400">real values, whatever your log says</span></div>
+        @if (Model.Statements.Count == 0)
+        {
+            <p class="muted">Nothing yet. The session flushes about every 5 seconds; refresh in a moment.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="grid">
+                    <thead><tr><th>Time</th><th>Event</th><th class="num">ms</th><th class="num">Reads</th><th class="num">Rows</th><th>Text</th></tr></thead>
+                    <tbody>
+                        @foreach (var s in Model.Statements.Take(12))
+                        {
+                            <tr>
+                                <td>@s.Timestamp.ToLocalTime().ToString("HH:mm:ss")</td>
+                                <td>@s.Event</td>
+                                <td class="num">@s.DurationMs.ToString("N1")</td>
+                                <td class="num">@s.LogicalReads.ToString("N0")</td>
+                                <td class="num">@s.RowCount.ToString("N0")</td>
+                                <td><pre style="padding:0.4rem 0.5rem;font-size:0.75rem;white-space:pre-wrap;overflow-wrap:anywhere;min-width:18rem"><code class="language-sql">@(s.Text.Length > 900 ? s.Text[..900] + "..." : s.Text)</code></pre></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="panel-title">Optimizer events <span class="muted" style="font-weight:400">PSP and OPPO: engaged, or skipped and why</span></div>
+        @if (Model.OptimizerEvents.Count == 0)
+        {
+            <p class="muted">No PSP or OPPO events for this tag. That usually means the predicate wasn't a candidate at all (no skew, no equality predicate, or no optional parameter pattern).</p>
+        }
+        else
+        {
+            @foreach (var e in Model.OptimizerEvents.Take(10))
+            {
+                <div style="margin-bottom:0.6rem">
+                    <span class="badge @(e.Event.Contains("skipped") ? "warn" : "good")">@e.Event</span>
+                    <span class="muted" style="font-size:0.8rem">@e.Timestamp.ToLocalTime().ToString("HH:mm:ss")</span>
+                    <pre style="margin-top:0.3rem;font-size:0.78rem"><code class="language-plaintext">@string.Join("\n", e.Fields)</code></pre>
+                </div>
+            }
+        }
+    }
+    <button class="btn secondary small" hx-get="?handler=Xe&tag=@Uri.EscapeDataString(tag)" hx-target="closest div.card" hx-swap="outerHTML">Refresh</button>
+</div>

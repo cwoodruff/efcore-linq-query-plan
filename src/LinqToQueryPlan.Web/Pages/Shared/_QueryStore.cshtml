@@ -1,0 +1,59 @@
+@model QueryStoreView
+<div class="card stack">
+    <div class="panel-title">Query Store <span class="muted" style="font-weight:400">what a DBA sees, and the query_id they'll ask you about (scripts/04)</span></div>
+    <p class="muted" style="font-size:0.85rem">Query Store's text for a statement starts at <code>SELECT</code>, so your tag isn't in it. These rows are found through the batch each query was compiled from (<code>last_compile_batch_sql_handle</code>), which still has the tag.</p>
+    @foreach (var n in Model.Notes)
+    {
+        <p class="admin-note">@n</p>
+    }
+    @if (Model.Queries.Count == 0)
+    {
+        <p class="muted">No tagged statements in Query Store yet. Run an action, then refresh. If they never show up, check that capture mode is ALL on the <a href="/lab">Lab page</a>.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="grid">
+                <thead><tr><th class="num">query_id</th><th>Role</th><th class="num">Plans</th><th class="num">Executions</th><th>Last run</th><th>Hint</th><th>SQL</th></tr></thead>
+                <tbody>
+                    @foreach (var q in Model.Queries)
+                    {
+                        <tr>
+                            <td class="num"><strong>@q.QueryId</strong></td>
+                            <td>@q.Role</td>
+                            <td class="num">@q.Plans</td>
+                            <td class="num">@q.Executions</td>
+                            <td>@q.LastExecution?.ToLocalTime().ToString("HH:mm:ss")</td>
+                            <td>@(q.Hint ?? "")</td>
+                            <td><code style="font-size:0.75rem">@(q.SqlPreview.Length > 160 ? q.SqlPreview[..160] + "..." : q.SqlPreview)</code></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="panel-title" style="margin-top:0.5rem">Parameter Sensitive Plan variants <span class="muted" style="font-weight:400">sys.query_store_query_variant</span></div>
+    @if (Model.Variants.Count == 0)
+    {
+        <p class="muted">No variants. PSP either didn't engage (the Extended Events view says why) or nothing has run yet.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="grid">
+                <thead><tr><th class="num">Parent query_id</th><th class="num">Variant query_id</th><th class="num">Dispatcher plan</th><th class="num">Plan</th><th>Type</th><th class="num">Executions</th><th class="num">Avg reads</th><th class="num">Avg ms</th></tr></thead>
+                <tbody>
+                    @foreach (var v in Model.Variants)
+                    {
+                        <tr>
+                            <td class="num">@v.ParentQueryId</td><td class="num">@v.VariantQueryId</td><td class="num">@v.DispatcherPlanId</td><td class="num">@v.PlanId</td>
+                            <td>@v.PlanType</td><td class="num">@v.Executions</td><td class="num">@v.AvgReads.ToString("N0")</td><td class="num">@v.AvgMs.ToString("N1")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    <button class="btn secondary small" hx-get="?handler=QueryStore" hx-target="#server-panel">Refresh</button>
+</div>
