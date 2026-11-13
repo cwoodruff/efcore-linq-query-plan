@@ -16,6 +16,11 @@
         if (d) d.disabled = !dark;
     }
 
+    function syncNotesToggle() {
+        const open = root.dataset.notes !== 'hidden';
+        document.querySelectorAll('[data-toggle="notes"]').forEach(function (b) { b.setAttribute('aria-expanded', open); });
+    }
+
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-toggle]');
         if (btn) {
@@ -31,6 +36,7 @@
             } else if (what === 'notes') {
                 root.dataset.notes = root.dataset.notes === 'hidden' ? '' : 'hidden';
                 store('lab-notes', root.dataset.notes);
+                syncNotesToggle();
             }
             return;
         }
@@ -107,7 +113,7 @@
     }
 
     syncHighlightTheme();
-    document.addEventListener('DOMContentLoaded', function () { highlight(document); });
+    document.addEventListener('DOMContentLoaded', function () { highlight(document); syncNotesToggle(); });
     document.addEventListener('htmx:load', function (e) { highlight(e.target); });
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { syncHighlightTheme(); lab.restyleCharts(); });
 })();

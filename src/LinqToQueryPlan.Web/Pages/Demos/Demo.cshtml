@@ -98,6 +98,12 @@
     </section>
 
     <aside class="notes-col card notes">
-        @Html.Raw(Model.NotesHtml)
+        <button type="button" class="notes-toggle" data-toggle="notes" aria-controls="notes-body" title="Collapse or expand the notes">
+            <span class="notes-toggle-label">Notes</span>
+            <span class="notes-toggle-icon" aria-hidden="true">&rsaquo;</span>
+        </button>
+        <div class="notes-body" id="notes-body">
+            @Html.Raw(Model.NotesHtml)
+        </div>
     </aside>
 </div>
