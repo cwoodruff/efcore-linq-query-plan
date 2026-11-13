@@ -64,9 +64,13 @@
 
         <div class="results-head">
             <h2>Results</h2>
+            <span class="baseline-chip" hidden>
+                <span class="baseline-chip-text"></span>
+                <button type="button" class="tool" data-unpin title="Stop comparing">Clear baseline</button>
+            </span>
             <button type="button" class="tool" onclick="document.getElementById('results').innerHTML=''">Clear</button>
         </div>
-        <div id="results"></div>
+        <div id="results" data-demo="@d.Slug"></div>
 
         @if (d.Panels != ServerPanels.None)
         {

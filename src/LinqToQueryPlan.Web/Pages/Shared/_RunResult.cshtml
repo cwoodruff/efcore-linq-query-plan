@@ -2,8 +2,20 @@
 @{
     var id = "r" + Guid.NewGuid().ToString("n")[..8];
     var groups = Model.Panels.GroupBy(p => p.Group ?? p.Title).ToList();
+
+    // Headline numbers for the audience. Query time is the sum of the queries themselves, not the plan capture around them.
+    var allPlans = Model.Queries.SelectMany(q => q.Plans).ToList();
+    var queryMs = Model.Queries.Sum(q => q.ElapsedMs);
+    var rows = Model.Queries.Sum(q => (long)q.Rows);
+    var reads = allPlans.Sum(p => p.LastLogicalReads);
+    var newPlans = allPlans.Count(p => p.CompiledForThisRun);
+    var planText = allPlans.Count == 0 ? null
+        : newPlans == allPlans.Count ? "New"
+        : newPlans == 0 ? "Reused"
+        : $"{newPlans} new / {allPlans.Count - newPlans} reused";
+    var showStats = Model.Error is null && Model.Queries.Count > 0;
 }
-<article class="card result" id="@id">
+<article class="card result" id="@id" data-label="@Model.ActionLabel" data-time="@Model.StartedUtc.ToLocalTime().ToString("HH:mm:ss")">
     <header>
         <h3>@Model.ActionLabel</h3>
         @if (Model.Error is null)
@@ -14,11 +26,55 @@
         {
             <span class="badge bad">error</span>
         }
-        <span class="badge">@Model.TotalMs ms total</span>
+        @if (!showStats)
+        {
+            <span class="badge">@Model.TotalMs ms total</span>
+        }
         <span class="badge">@Model.StartedUtc.ToLocalTime().ToString("HH:mm:ss")</span>
-        <button type="button" class="tool close" data-close>Close</button>
+        <span class="baseline-badge badge accent">baseline</span>
+        <span class="result-tools">
+            @if (showStats)
+            {
+                <button type="button" class="tool" data-pin title="Compare later runs against this one">Pin as baseline</button>
+            }
+            <button type="button" class="tool" data-focus title="Show this result full screen (Esc to exit)">Focus</button>
+            <button type="button" class="tool close" data-close>Close</button>
+        </span>
     </header>
     <div class="body">
+        @if (showStats)
+        {
+            <div class="stats">
+                <div class="stat" data-metric="ms" data-value="@queryMs">
+                    <div class="stat-label">Query time</div>
+                    <div class="stat-value">@queryMs.ToString("N0")<small> ms</small></div>
+                    <div class="stat-delta"></div>
+                </div>
+                @if (allPlans.Count > 0)
+                {
+                    <div class="stat" data-metric="reads" data-value="@reads">
+                        <div class="stat-label">Logical reads</div>
+                        <div class="stat-value">@reads.ToString("N0")</div>
+                        <div class="stat-delta"></div>
+                    </div>
+                }
+                <div class="stat" data-metric="rows" data-value="@rows">
+                    <div class="stat-label">Rows</div>
+                    <div class="stat-value">@rows.ToString("N0")</div>
+                    <div class="stat-delta"></div>
+                </div>
+                @if (planText is not null)
+                {
+                    <div class="stat @(newPlans == 0 ? "stat-warn" : "stat-good")">
+                        <div class="stat-label">Plan</div>
+                        <div class="stat-value">@planText</div>
+                        <div class="stat-note">@(newPlans == 0 ? "from the plan cache" : "compiled for this run")</div>
+                    </div>
+                }
+            </div>
+            <div class="compare-note"></div>
+        }
+
         @if (Model.Error is not null)
         {
             <div class="error">

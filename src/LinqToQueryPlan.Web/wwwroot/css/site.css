@@ -247,12 +247,47 @@ table.grid td.num, table.grid th.num { text-align: right; }
 .result { margin-bottom: 1.25rem; padding: 0; overflow: hidden; }
 .result > header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface-2); }
 .result > header h3 { margin: 0; font-size: 1rem; }
-.result > header .close { margin-left: auto; }
+.result > header .result-tools { margin-left: auto; display: flex; gap: 0.35rem; }
+.result .baseline-badge { display: none; }
+.result.is-baseline { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.result.is-baseline .baseline-badge { display: inline-block; }
+.results-head { gap: 0.6rem; }
+.results-head h2 { margin-right: auto; }
+.baseline-chip { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+.baseline-chip[hidden] { display: none; }
+
+/* headline numbers, sized to read from the back of the room */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
+.stat { padding: 0.75rem 0.9rem; border-radius: 10px; background: var(--surface-2); border-top: 4px solid var(--c4); min-width: 0; }
+.stat-good { border-top-color: var(--sage); }
+.stat-warn { border-top-color: var(--warn); }
+.stat-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+.stat-value { font-size: 2.1rem; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat-value small { font-size: 0.5em; font-weight: 700; color: var(--muted); }
+.stat-note { font-size: 0.8rem; color: var(--muted); }
+.stat-delta { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat-delta:empty { display: none; }
+.stat-delta .was { font-weight: 400; color: var(--muted); font-size: 0.85em; margin-left: 0.35em; }
+.stat-delta.better { color: var(--sage); }
+.stat-delta.worse { color: var(--bad); }
+.stat-delta.same { color: var(--muted); }
+.compare-note { font-size: 0.85rem; color: var(--muted); margin-top: -0.4rem; }
+.compare-note:empty { display: none; }
+
+/* focus mode: one result fills the screen at projector size */
+:root[data-focus] { --base: 22px; overflow: hidden; }
+:root[data-focus][data-size="large"] { --base: 26px; }
+.result.focused { position: fixed; inset: 0; z-index: 1000; margin: 0; border-radius: 0; border: 0; overflow-y: auto; }
+.result.focused > header { position: sticky; top: 0; z-index: 1; }
+.result.focused > header h3 { font-size: 1.3rem; }
+.result.focused .body { max-width: 110rem; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+.result.focused .stat-value { font-size: 3rem; }
+.result.focused .chart { height: 22rem; }
 .result .body { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
 .result .error { border-left: 4px solid var(--bad); padding: 0.6rem 0.8rem; background: color-mix(in srgb, var(--bad) 10%, transparent); border-radius: 0 8px 8px 0; }
 
 .observations { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-.observations li { padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.92rem; border-left: 4px solid var(--muted); background: var(--surface-2); }
+.observations li { padding: 0.7rem 0.95rem; border-radius: 8px; font-size: 1.08rem; font-weight: 600; line-height: 1.4; border-left: 5px solid var(--muted); background: var(--surface-2); }
 .observations li.obs-good { border-left-color: var(--sage); }
 .observations li.obs-warn { border-left-color: var(--accent); }
 .observations li.obs-info { border-left-color: var(--c4); }
@@ -294,6 +329,19 @@ details.log > summary { cursor: pointer; color: var(--muted); font-size: 0.85rem
 @media (max-width: 700px) { .op { grid-template-columns: 1fr; } }
 
 .params td code { white-space: nowrap; }
+details.params-wrap > summary { cursor: pointer; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+
+/* plain-language callouts above the plan tree */
+.plan-callouts { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.plan-callouts li { padding: 0.65rem 0.9rem; border-radius: 8px; background: var(--surface-2); font-size: 1.02rem; line-height: 1.45; border-left: 5px solid var(--c1); }
+.plan-callouts li.callout-miss { border-left-color: var(--accent); }
+.plan-callouts .muted { display: block; font-size: 0.88rem; margin-top: 0.15rem; }
+.callout-tag { display: block; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; font-weight: 700; color: var(--muted); margin-bottom: 0.1rem; }
+.op.hot { box-shadow: inset 0 0 0 2px var(--c1); }
+.op.hot.miss { box-shadow: inset 0 0 0 2px var(--c1), inset 4px 0 0 var(--accent); }
+.op-tag { display: inline-block; font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.05rem 0.4rem; border-radius: 999px; margin-right: 0.35rem; vertical-align: middle; }
+.hot-tag { background: var(--c1); color: var(--accent-ink, #fff); }
+.miss-tag { background: var(--accent); color: var(--accent-ink, #fff); }
 .legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
 .legend span::before { content: ""; display: inline-block; width: 0.7rem; height: 0.45rem; border-radius: 2px; margin-right: 0.3rem; vertical-align: middle; }
 .legend .l-cost::before { background: var(--c1); }

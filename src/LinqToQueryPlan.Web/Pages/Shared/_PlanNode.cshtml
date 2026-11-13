@@ -2,10 +2,14 @@
 @{
     var max = ViewData["maxRows"] is double m ? m : 1;
     var miss = Model.MisestimateFactor is >= 10 && Math.Max(Model.EstRowsTotal, Model.ActualRows ?? 0) >= 100;
+    var isHot = ViewData["hotNode"] is int hotId && hotId == Model.NodeId;
+    var isWorst = ViewData["worstNode"] is int worstId && worstId == Model.NodeId;
 }
 <li>
-    <div class="op @(miss ? "miss" : "")">
+    <div class="op @(miss ? "miss" : "") @(isHot ? "hot" : "")">
         <div>
+            @if (isHot) { <span class="op-tag hot-tag">most expensive</span> }
+            @if (isWorst) { <span class="op-tag miss-tag">biggest misestimate</span> }
             <span class="name">@Model.PhysicalOp</span>
             @if (Model.LogicalOp != Model.PhysicalOp && Model.LogicalOp.Length > 0)
             {

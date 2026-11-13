@@ -3,6 +3,17 @@
     var nodes = Model.Parsed.AllNodes().ToList();
     var maxRows = nodes.Count == 0 ? 1 : nodes.Max(n => Math.Max(n.EstRowsTotal, n.ActualRows ?? 0));
     var stmtId = "t" + Guid.NewGuid().ToString("n")[..8];
+
+    // Plain-language callouts: where the cost went, and where the row estimate was furthest from reality.
+    var hot = nodes.Count > 1 ? nodes.MaxBy(n => n.CostPercent) : null;
+    var worst = nodes
+        .Where(n => n.MisestimateFactor is >= 10 && Math.Max(n.EstRowsTotal, n.ActualRows ?? 0) >= 100)
+        .MaxBy(n => n.MisestimateFactor);
+    string Describe(PlanNode n) => n.ObjectName is null ? n.PhysicalOp : $"{n.PhysicalOp} on {n.ObjectName}";
+    string RowWord(double v) => Ui.Rows(v) + (Math.Abs(v - 1) < 0.05 ? " row" : " rows");
+
+    // Only show the sniffed-vs-runtime table up front when the values differ; otherwise it is detail.
+    var paramsDiffer = Model.Parsed.Parameters.Any(p => p.RuntimeValue is not null && p.CompiledValue is not null && p.RuntimeValue != p.CompiledValue);
 }
 <div class="plan">
     <div class="panel-title">What the optimizer saw <span class="muted" style="font-weight:400">(cached plan for this statement)</span></div>
@@ -25,8 +36,35 @@
         <a class="btn secondary small" href="/plans/@(Model.Id).sqlplan" title="Open in VS Code (MSSQL extension) or SSMS">Download .sqlplan</a>
     </div>
 
+    @if (hot is not null || worst is not null)
+    {
+        <ul class="plan-callouts">
+            @if (hot is not null)
+            {
+                <li class="callout-hot">
+                    <span class="callout-tag">Most expensive step</span>
+                    <strong>@Describe(hot)</strong> takes <strong>@Ui.Pct(hot.CostPercent)</strong> of the estimated cost.
+                </li>
+            }
+            @if (worst is not null)
+            {
+                var under = worst.ActualRows > worst.EstRowsTotal;
+                <li class="callout-miss">
+                    <span class="callout-tag">Biggest misestimate</span>
+                    <strong>@Describe(worst)</strong>: estimated <strong>@RowWord(worst.EstRowsTotal)</strong>, got <strong>@RowWord(worst.ActualRows!.Value)</strong>
+                    (<strong>@worst.MisestimateFactor!.Value.ToString("N0")&times; off</strong>).
+                    <span class="muted">@(under
+                        ? "The optimizer planned for far fewer rows than it got, so joins and memory were sized too small."
+                        : "The optimizer planned for far more rows than it got, so it did more work than needed.")</span>
+                </li>
+            }
+        </ul>
+    }
+
     @if (Model.Parsed.Parameters.Count > 0)
     {
+        <details class="params-wrap" @(paramsDiffer ? "open" : "")>
+        <summary>Parameters @(paramsDiffer ? Html.Raw("<span class=\"badge warn\">sniffed value differs from this run</span>") : Html.Raw("<span class=\"muted\">(compiled and runtime values match)</span>"))</summary>
         <div class="table-wrap" style="margin-bottom:0.6rem">
             <table class="grid params">
                 <thead><tr><th>Parameter</th><th>Type</th><th>Compiled for (sniffed)</th><th>This run</th></tr></thead>
@@ -43,11 +81,14 @@
                 </tbody>
             </table>
         </div>
+        </details>
     }
 
     @if (Model.Parsed.Root is { } root)
     {
         ViewData["maxRows"] = maxRows;
+        ViewData["hotNode"] = hot?.NodeId;
+        ViewData["worstNode"] = worst?.NodeId;
         <ul class="plan-tree">
             <partial name="_PlanNode" model="root" view-data="ViewData" />
         </ul>
